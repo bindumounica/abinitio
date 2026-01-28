@@ -1,12 +1,23 @@
 tasks.register('packageTar') {
     doLast {
-        mkdir 'build/dist'
+        mkdir('build/dist')
         exec {
-            commandLine 'tar', '-cf',
-            'build/dist/abinitio-etl-poc-1.0.0.tar',
-            'graphs', 'runtime', 'transforms', 'data'
+            commandLine 'tar',
+                    '-cf',
+                    'build/dist/abinitio-etl-poc-1.0.0.tar',
+                    'graphs',
+                    'runtime',
+                    'transforms',
+                    'data'
         }
     }
 }
 
-build.dependsOn packageTar
+tasks.named('build') {
+    dependsOn(tasks.named('packageTar'))
+}
+tasks.register('printHello') {
+    doLast {
+        println 'Hello, Ab Initio ETL Project Build!'
+    }
+}

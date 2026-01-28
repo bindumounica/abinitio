@@ -242,12 +242,15 @@ jobs:
         
   
       - name: Promote image to PROD
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
         run: |
             docker tag \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-uat \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-prod
+              "$DOCKER_USER/$IMAGE_NAME":${{ github.ref_name }}-uat \
+              "$DOCKER_USER/$IMAGE_NAME":${{ github.ref_name }}-prod
   
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-prod
+            docker push "$DOCKER_USER/$IMAGE_NAME":${{ github.ref_name }}-prod
   
 
 # =====================================================

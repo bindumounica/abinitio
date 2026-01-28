@@ -42,7 +42,22 @@ jobs:
         run: |
             VERSION=${GITHUB_REF#refs/tags/v}
             echo "VERSION=$VERSION" >> $GITHUB_ENV
-  
+
+      # -----------------------------
+      # DEV GATE: GO MODULE HYGIENE
+      # -----------------------------
+      - name: Validate Go module dependencies
+        run: |
+          echo "[CI] Running go mod tidy (validation)"
+          go mod tidy
+
+          echo "[CI] Checking for uncommitted changes"
+          if ! git diff --quiet; then
+            echo "❌ go.mod / go.sum not tidy"
+            echo "👉 Run 'go mod tidy' locally and commit changes"
+            git diff
+            exit 1
+          fi
 
       # -----------------------------
       # DEV GATE 1: PRE-BUILD
@@ -112,11 +127,18 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew build sonar --info
-      # - name: Sonar Scan
-      #   run: ./gradlew sonar
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      - name: Sonar Scan
+        run: ./gradlew sonar
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Sonar Quality Gate
+        uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
+        with:
+            scanMetadataReportFile: build/sonar/report-task.txt
+        env:
+            SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
 
       # -----------------------------
       # DEV: BUILD & PUSH IMAGE

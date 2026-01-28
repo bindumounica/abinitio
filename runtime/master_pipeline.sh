@@ -6,6 +6,12 @@ echo "[PIPELINE] Starting ETL run"
 # Bootstrap directories
 mkdir -p data/curated data/processed
 
+echo "[PIPELINE] Validating Go module"
+test -f go.mod || { echo "❌ go.mod missing"; exit 1; }
+
+echo "[PIPELINE] Validating Go module"
+test -f go.mod || { echo "❌ go.mod missing"; exit 1; }
+
 # Validate input
 if [ ! -f data/raw/user_events.csv ]; then
   echo "[ERROR] Input file missing"

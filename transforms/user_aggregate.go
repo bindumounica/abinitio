@@ -20,7 +20,7 @@ func main() {
 		user := row[0]
 		counts[user]++
 	}
-
+	os.MkdirAll("data/curated", 0755)
 	out, _ := os.Create("data/curated/user_activity_summary.csv")
 	writer := csv.NewWriter(out)
 	writer.Write([]string{"user_id", "event_count"})

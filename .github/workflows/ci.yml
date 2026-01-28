@@ -187,7 +187,7 @@ jobs:
         env:
             DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
             IMAGE_NAME: ${{ env.IMAGE_NAME }}
-            TAG: ${{ github.ref_name }}-${{ env.TAG }}
+            TAG: ${{ github.ref_name }}-dev
         run: |
             docker pull "$DOCKER_USER/$IMAGE_NAME:$TAG"
         

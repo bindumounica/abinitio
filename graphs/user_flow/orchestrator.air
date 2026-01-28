@@ -1,0 +1,5 @@
+ORCHESTRATION:
+1. Validate input schema
+2. Transform & aggregate data
+3. Generate curated output
+4. Publish metrics

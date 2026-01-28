@@ -1,8 +1,0 @@
-// customer_data.dml
-record
-  decimal("|") customer_id;
-  string("|")  customer_name;
-  string("|")  email_address;
-  datetime("YYYY-MM-DD") signup_date;
-  string("\n") newline;
-end;

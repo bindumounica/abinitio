@@ -1,9 +1,0 @@
-// filter_and_format.xfr
-out::reformat(in) =
-begin
-  out.customer_id   :: in.customer_id;
-  // Business Logic: Uppercase the name
-  out.customer_name :: string_upcase(in.customer_name);
-  out.email_address :: in.email_address;
-  out.signup_date   :: in.signup_date;
-end;

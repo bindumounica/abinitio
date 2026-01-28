@@ -1,20 +1,12 @@
-plugins {
-    id 'base'
+tasks.register('packageTar') {
+    doLast {
+        mkdir 'build/dist'
+        exec {
+            commandLine 'tar', '-cf',
+            'build/dist/abinitio-etl-poc-1.0.0.tar',
+            'graphs', 'runtime', 'transforms', 'data'
+        }
+    }
 }
 
-version = "1.0.0"
-
-task etlTar(type: Tar) {
-    archiveBaseName = "etl-component"
-    archiveVersion = version
-    archiveExtension = "tar"
-    destinationDirectory = file("$buildDir/dist")
-
-    from("graphs") { into "graphs" }
-    from("mp")     { into "mp" }
-    from("dml")    { into "dml" }
-    from("scripts"){ into "scripts" }
-    from("config") { into "config" }
-}
-
-build.dependsOn etlTar
+build.dependsOn packageTar

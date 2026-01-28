@@ -1,67 +1,104 @@
-name: ETL CI POC – Multi Job
+name: Ab Initio Style ETL – Full CI + Scheduler POC
 
 on:
+  # CI trigger
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+
+  # Manual trigger
+  # workflow_dispatch:
+
+  # # Scheduler (Control-M equivalent)
+  # schedule:
+  #   - cron: "30 4 * * *"   # 10:00 AM IST
+
+env:
+  COMPONENT_NAME: abinitio-etl-poc
+  VERSION: 1.0.0
+  IMAGE_NAME: abinitio-etl-poc
 
 jobs:
-  package-etl:
-    name: Package ETL TAR
+# =====================================================
+# JOB 1: BUILD + PACKAGE ETL COMPONENT
+# =====================================================
+  build-etl:
+    name: Build & Package ETL Component
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Set up JDK for Gradle
+      - name: Setup Java (Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
+          cache: gradle
 
-      - name: Run pre-build hook (if present)
+      - name: Setup Go (Transformation engine)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+
+      # -----------------------------
+      # PRE-BUILD VALIDATION
+      # -----------------------------
+      - name: Pre-build validation
         run: |
-          if [ -f ci/pre-build.sh ]; then
-            echo "Pre-build script found. Making it executable..."
-            chmod +x ci/pre-build.sh
-            echo "Executing pre-build script..."
-            ./ci/pre-build.sh
-          else
-            echo "No pre-build script found. Skipping."
-          fi
+          chmod +x ci/pre-build.sh
+          ./ci/pre-build.sh
 
-
-      - name: Build ETL TAR
+      # -----------------------------
+      # RUN REAL ETL LOCALLY (VALIDATION)
+      # -----------------------------
+      - name: Run ETL pipeline (validation run)
         run: |
-          chmod +x gradlew || true
-          ./gradlew build
+          chmod +x runtime/master_pipeline.sh
+          ./runtime/master_pipeline.sh
 
-      - name: Verify TAR
+      # -----------------------------
+      # BUILD TAR (ETL COMPONENT)
+      # -----------------------------
+      - name: Build ETL TAR using Gradle
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build
+
+      - name: Verify TAR contents
         run: |
           ls -lh build/dist
           tar -tf build/dist/*.tar
 
-      - name: Post-build validation and metadata
-        run: |
-          chmod +x ci/post-build.sh && true
-          ./ci/post-build.sh
+      # -----------------------------
+      # POST-BUILD VALIDATION
+      # -----------------------------
+      - name: Post-build validation & metadata
         env:
-          ARTIFACT_PATH: build/abinitio-component.tar.gz
+          ARTIFACT_PATH: $(ls build/dist/*.tar | head -n 1)
           COMPONENT_NAME: abinitio-etl-poc
-          VERSION: 0.1.0
+          VERSION: 1.0.0
+        run: |
+          chmod +x ci/post-build.sh
+          ./ci/post-build.sh
 
+      # -----------------------------
+      # UPLOAD TAR ARTIFACT
+      # -----------------------------
       - name: Upload ETL TAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: etl-tar
+          name: etl-component-tar
           path: build/dist/*.tar
           retention-days: 7
 
-  build-image:
-    name: Build Image from TAR
+# =====================================================
+# JOB 2: BUILD + PUSH DOCKER IMAGE (ARTIFACTORY)
+# =====================================================
+  dockerize:
+    name: Build & Push Docker Image
     runs-on: ubuntu-latest
-    needs: package-etl
+    needs: build-etl
 
     steps:
       - name: Checkout source
@@ -70,19 +107,67 @@ jobs:
       - name: Download ETL TAR artifact
         uses: actions/download-artifact@v4
         with:
-          name: etl-tar
+          name: etl-component-tar
           path: build/dist
 
-      - name: Verify downloaded TAR
+      - name: Verify TAR before image build
         run: |
           ls -lh build/dist
           tar -tf build/dist/*.tar
 
+      # -----------------------------
+      # LOGIN TO DOCKER HUB
+      # -----------------------------
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build container image from TAR
+      # -----------------------------
+      # BUILD & PUSH IMAGE
+      # -----------------------------
+      - name: Build Docker Image
         run: |
-          docker build -t etl-component:1.0.0 .
+          docker build \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+            .
 
-      - name: Show image details
+      - name: Push Docker Image
         run: |
-          docker images | grep etl-component
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+      - name: Show pushed image
+        run: |
+          docker images | grep ${{ env.IMAGE_NAME }}
+
+# =====================================================
+# JOB 3: SCHEDULED EXECUTION (RUNTIME ONLY)
+# =====================================================
+  run-etl:
+    name: Scheduled ETL Execution
+    runs-on: ubuntu-latest
+    needs: dockerize
+
+    steps:
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Run ETL Component (Production-like run)
+        run: |
+          echo "========================================"
+          echo "Starting scheduled ETL execution"
+          echo "Time: $(date)"
+          echo "========================================"
+
+          docker run --rm \
+            -e RUN_MODE=PROD \
+            -e COMPONENT_NAME=abinitio-etl-poc \
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+
+          echo "========================================"
+          echo "ETL execution completed"
+          echo "========================================"

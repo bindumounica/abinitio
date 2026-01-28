@@ -193,18 +193,27 @@ jobs:
         
   
       - name: UAT Smoke Test
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          TAG: ${{ github.ref_name }}-dev
         run: |
             docker run --rm \
               -e RUN_MODE=UAT \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-dev
+                "$DOCKER_USER/$IMAGE_NAME:${{ github.ref_name }}-$TAG"
   
       - name: Promote image to UAT
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          IMAGE_NAME: ${{ env.IMAGE_NAME }}
+          TAG_DEV: ${{ github.ref_name }}-dev
+          TAG_UAT: ${{ github.ref_name }}-uat
         run: |
             docker tag \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-dev \
-              ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-uat
+               "$DOCKER_USER/$IMAGE_NAME:${{ github.ref_name }}-$TAG_DEV"\
+              "$DOCKER_USER/$IMAGE_NAME:${{ github.ref_name }}-$TAG_UAT"
   
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-uat
+            docker push "$DOCKER_USER/$IMAGE_NAME:${{ github.ref_name }}-$TAG_UAT"
   
 
 # =====================================================

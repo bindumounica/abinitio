@@ -1,0 +1,20 @@
+plugins {
+    id 'base'
+}
+
+version = "1.0.0"
+
+task etlTar(type: Tar) {
+    archiveBaseName = "etl-component"
+    archiveVersion = version
+    archiveExtension = "tar"
+    destinationDirectory = file("$buildDir/dist")
+
+    from("graphs") { into "graphs" }
+    from("mp")     { into "mp" }
+    from("dml")    { into "dml" }
+    from("scripts"){ into "scripts" }
+    from("config") { into "config" }
+}
+
+build.dependsOn etlTar

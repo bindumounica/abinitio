@@ -3,9 +3,9 @@ set -euo pipefail
 
 echo "▶ POST-BUILD VALIDATION STARTED"
 
-ARTIFACT_PATH=${ARTIFACT_PATH:-$(ls build/dist/*.tar | head -n 1)}
-COMPONENT_NAME=${COMPONENT_NAME:-abinitio-etl-poc}
-VERSION=${VERSION:-1.0.0}
+ARTIFACT_PATH="${ARTIFACT_PATH:-$(ls build/dist/*.tar | head -n 1)}"
+COMPONENT_NAME="${COMPONENT_NAME:-abinitio-etl-poc}"
+VERSION="${VERSION:-1.0.0}"
 
 # 1️⃣ Artifact exists
 if [ ! -f "$ARTIFACT_PATH" ]; then

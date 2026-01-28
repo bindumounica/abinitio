@@ -57,7 +57,7 @@ jobs:
             echo "👉 Run 'go mod tidy' locally and commit changes"
             git diff
             exit 1
-          fi
+          fi       
 
       # -----------------------------
       # DEV GATE 1: PRE-BUILD
@@ -127,8 +127,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew build sonar --info
+      - name: Run Go tests
+        run: |
+          go test ./transforms/... 
+
+      - name: Run Go tests with coverage
+        run: |
+            go test ./transforms/... -coverprofile=coverage.out
       - name: Sonar Scan
-        run: ./gradlew sonar
+        run: ./gradlew sonar \
+          -Dsonar.go.coverage.reportPaths=coverage.out
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
@@ -138,8 +146,7 @@ jobs:
             scanMetadataReportFile: build/sonar/report-task.txt
         env:
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-  
-
+          
       # -----------------------------
       # DEV: BUILD & PUSH IMAGE
       # -----------------------------

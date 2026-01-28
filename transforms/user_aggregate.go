@@ -65,7 +65,10 @@ func main() {
 	if len(records) < 2 {
 		log.Fatalf("No data rows found in %s", input.Path)
 	}
-
+	log.Printf(
+		"[ETL] Validating input schema: CSV has %d columns, interface expects %d",
+		len(records[0]), len(input.Schema),
+	  )
 	// Header validation
 	validateHeader(records[0], input.Schema)
 
@@ -138,12 +141,3 @@ func schemaToHeader(schema []Field) []string {
 	}
 	return header
 }
-log.Printf(
-	"[ETL] Validating input schema: CSV has %d columns, interface expects %d",
-	len(records[0]), len(input.Schema),
-  )
-	if len(records[0]) != len(input.Schema) {
-		log.Fatalf("Schema violation in %s: expected %d columns, got %d",
-			input.Path, len(input.Schema), len(records[0]),
-		)
-	}  

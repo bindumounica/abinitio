@@ -79,9 +79,11 @@ jobs:
       # DEV GATE 3: BUILD TAR
       # -----------------------------
       - name: Build ETL TAR
+        env:
+          GRADLE_OPTS: "-Dscan.acceptTermsOfService=yes"
         run: |
           chmod +x gradlew
-          ./gradlew clean build
+          ./gradlew build --scan --no-daemon
 
       - name: Upload ETL TAR artifact
         uses: actions/upload-artifact@v4

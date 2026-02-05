@@ -79,12 +79,8 @@ jobs:
       - name: Run ETL pipeline (DEV validation)
         run: |
           chmod +x etl runtime/master_pipeline.sh
-          # Create non-interactive user `etluser` (portable for Ubuntu/Alpine)
-          id -u etluser >/dev/null 2>&1 || (
-            useradd -m -s /bin/sh etluser 2>/dev/null || \
-            adduser --disabled-password --gecos "" etluser
-          )
-          chown -R etluser:etluser /etl
+          # Run pipeline as the current runner user on GitHub hosted runners.
+          # Creating system users requires root; avoid it in CI.
           ./runtime/master_pipeline.sh
 
       # -----------------------------

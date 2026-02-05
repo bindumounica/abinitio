@@ -2,5 +2,6 @@ FROM golang:1.23.4-alpine AS builder
 
 WORKDIR /etl
 COPY . .
+EXPOSE 8080
 
-CMD ["sh", "runtime/master_pipeline.sh"]
+CMD ["bash", "runtime/master_pipeline.sh"]

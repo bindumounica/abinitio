@@ -24,13 +24,11 @@ COPY runtime runtime
 COPY graphs graphs
 COPY data data
 
-# chmod FIRST (still root)
-RUN chmod +x etl runtime/master_pipeline.sh
+# Fix permissions BEFORE user switch
+RUN chmod +x etl runtime/master_pipeline.sh \
+ && adduser -D etluser \
+ && chown -R etluser:etluser /etl
 
-# create non-root user
-RUN adduser -D etluser
-
-# drop privileges AFTER chmod
 USER etluser
 
 ENTRYPOINT ["sh","runtime/master_pipeline.sh"]

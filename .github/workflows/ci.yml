@@ -79,7 +79,9 @@ jobs:
       # -----------------------------
       - name: Run ETL pipeline (DEV validation)
         run: |
-          chmod +x runtime/master_pipeline.sh
+          chmod +x etl runtime/master_pipeline.sh
+          adduser -D etluser
+          chown -R etluser:etluser /etl
           ./runtime/master_pipeline.sh
 
       # -----------------------------

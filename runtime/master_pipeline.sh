@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -euo pipefail
 
 echo "[PIPELINE] Starting ETL run"
@@ -20,7 +20,8 @@ fi
 
 # Run transformation
 echo "[PIPELINE] Running user aggregation"
-go run transforms/user_aggregate.go
+# go run transforms/user_aggregate.go
+./etl
 
 # Validate output
 if [ ! -f data/curated/user_activity_summary.csv ]; then

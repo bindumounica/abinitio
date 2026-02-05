@@ -7,10 +7,13 @@ import os
 from pathlib import Path
 
 PORT = 8080
-PUBLIC_DIR = Path("public")
+PUBLIC_DIR = Path(__file__).parent.parent / "public"
 
 class IndexHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
     """Custom handler that serves index.html for / requests."""
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, directory=str(PUBLIC_DIR), **kwargs)
     
     def translate_path(self, path):
         """Serve index.html when / is requested."""
@@ -23,13 +26,18 @@ class IndexHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         print(f"[HTTP] {format % args}", flush=True)
 
 if __name__ == "__main__":
-    os.chdir(PUBLIC_DIR)
+    print(f"[SERVER] Public directory: {PUBLIC_DIR}", flush=True)
     
-    with socketserver.TCPServer(("", PORT), IndexHTTPRequestHandler) as httpd:
-        print(f"[SERVER] Serving HTTP on port {PORT}", flush=True)
-        print(f"[SERVER] Serving files from: {PUBLIC_DIR.resolve()}", flush=True)
-        try:
+    if not PUBLIC_DIR.exists():
+        print(f"[ERROR] Public directory does not exist: {PUBLIC_DIR}", flush=True)
+        sys.exit(1)
+    
+    try:
+        with socketserver.TCPServer(("", PORT), IndexHTTPRequestHandler) as httpd:
+            print(f"[SERVER] Serving HTTP on port {PORT}", flush=True)
+            print(f"[SERVER] Serving from: {PUBLIC_DIR.resolve()}", flush=True)
             httpd.serve_forever()
-        except KeyboardInterrupt:
-            print("\n[SERVER] Shutting down", flush=True)
-            sys.exit(0)
+    except Exception as e:
+        print(f"[ERROR] {e}", flush=True)
+        sys.exit(1)
+

@@ -79,7 +79,11 @@ jobs:
       - name: Run ETL pipeline (DEV validation)
         run: |
           chmod +x etl runtime/master_pipeline.sh
-          adduser -D etluser
+          # Create non-interactive user `etluser` (portable for Ubuntu/Alpine)
+          id -u etluser >/dev/null 2>&1 || (
+            useradd -m -s /bin/sh etluser 2>/dev/null || \
+            adduser --disabled-password --gecos "" etluser
+          )
           chown -R etluser:etluser /etl
           ./runtime/master_pipeline.sh
 

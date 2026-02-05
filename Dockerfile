@@ -13,7 +13,7 @@ COPY . .
 RUN go build -o etl transforms/user_aggregate.go
 
 # ===========================
-# RUNTIME STAGE (LEAN)
+# RUNTIME STAGE
 # ===========================
 FROM alpine:3.19
 
@@ -24,9 +24,13 @@ COPY runtime runtime
 COPY graphs graphs
 COPY data data
 
-RUN adduser -D etluser
-USER etluser
-
+# chmod FIRST (still root)
 RUN chmod +x etl runtime/master_pipeline.sh
+
+# create non-root user
+RUN adduser -D etluser
+
+# drop privileges AFTER chmod
+USER etluser
 
 ENTRYPOINT ["sh","runtime/master_pipeline.sh"]

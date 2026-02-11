@@ -139,21 +139,13 @@ jobs:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle
-      - name: Build and analyze
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonar --info
-      - name: Run Go tests
-        run: |
-          go test ./transforms/... 
-
       - name: Run Go tests with coverage
         run: |
             go test ./transforms/... -coverprofile=coverage.out
-      - name: Sonar Scan
-        run: ./gradlew sonar -Dsonar.go.coverage.reportPaths=coverage.out
+      - name: Build, test, and analyze with SonarQube
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew build sonar -Dsonar.go.coverage.reportPaths=coverage.out --info
 
       - name: Sonar Debug Info (prints CE task + Quality Gate)
         if: always()
@@ -178,7 +170,7 @@ jobs:
         uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
         with:
           scanMetadataReportFile: build/sonar/report-task.txt
-          pollingTimeoutSec: 600
+          pollingTimeoutSec: 1200
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           

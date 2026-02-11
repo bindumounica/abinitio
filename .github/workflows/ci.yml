@@ -155,6 +155,25 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+      - name: Sonar Debug Info (prints CE task + Quality Gate)
+        if: always()
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          set -euo pipefail
+          metadata=build/sonar/report-task.txt
+          echo "== report-task.txt =="
+          sed -n '1,120p' "$metadata" || true
+          serverUrl=$(sed -n 's/serverUrl=\(.*\)/\1/p' "$metadata")
+          ceTaskUrl=$(sed -n 's/ceTaskUrl=\(.*\)/\1/p' "$metadata")
+          echo "CE task URL: $ceTaskUrl"
+          echo "-- CE task JSON --"
+          curl -s -u "${SONAR_TOKEN}:" "$ceTaskUrl" || true
+          analysisId=$(curl -s -u "${SONAR_TOKEN}:" "$ceTaskUrl" | jq -r '.task.analysisId') || true
+          echo "AnalysisId: $analysisId"
+          echo "-- Quality Gate JSON --"
+          curl -s -u "${SONAR_TOKEN}:" "${serverUrl}/api/qualitygates/project_status?analysisId=${analysisId}" || true
+
       - name: Sonar Quality Gate
         uses: sonarsource/sonarqube-quality-gate-action@v1.1.0
         with:
